@@ -38,15 +38,7 @@ const ABUSE_STRIKE_THRESHOLD = 5;
 const ABUSE_BLOCK_MS = 15 * 60 * 1000;
 
 const URL_REGEX = /(https?:\/\/|www\.)\S+/i;
-const BANNED_WORDS = [
-  "fuck",
-  "shit",
-  "bitch",
-  "asshole",
-  "motherfucker",
-  "nigga",
-  "faggot",
-];
+const BANNED_WORDS = ["fuck", "shit", "bitch", "asshole", "motherfucker", "nigga", "faggot"];
 
 const BOT_PERSONAS = [
   {
@@ -167,8 +159,7 @@ const getSocket = (id) => io.sockets.sockets.get(id);
 
 function getIpAddress(socket) {
   const forwarded = socket.handshake.headers["x-forwarded-for"];
-  const firstForwarded =
-    typeof forwarded === "string" ? forwarded.split(",")[0] : "";
+  const firstForwarded = typeof forwarded === "string" ? forwarded.split(",")[0] : "";
   return (firstForwarded || socket.handshake.address || "unknown").trim();
 }
 
@@ -930,9 +921,7 @@ function unpair(socket, options = {}) {
 io.on("connection", (socket) => {
   const ip = getIpAddress(socket);
   if (isIpBlocked(ip)) {
-    socket.emit("security:block", {
-      reason: "Too many abuse attempts. Try again later.",
-    });
+    socket.emit("security:block", { reason: "Too many abuse attempts. Try again later." });
     socket.disconnect(true);
     return;
   }
@@ -972,9 +961,7 @@ io.on("connection", (socket) => {
 
   socket.on("message", (text) => {
     if (typeof text !== "string") return;
-    if (
-      isSocketEventRateLimited(socket.id, "message", MAX_MESSAGES_PER_WINDOW)
-    ) {
+    if (isSocketEventRateLimited(socket.id, "message", MAX_MESSAGES_PER_WINDOW)) {
       recordIpAbuse(ip);
       return;
     }
@@ -1015,22 +1002,6 @@ io.on("connection", (socket) => {
     if (botSessions.has(socket.id)) return;
     const partnerSocket = getSocket(partners.get(socket.id));
     if (partnerSocket?.connected) partnerSocket.emit("stopTyping");
-  });
-
-  socket.on("topicSpin", (payload) => {
-    if (!payload || typeof payload !== "object") return;
-    const raw = payload.topic;
-    if (typeof raw !== "string") return;
-    const topic = raw.trim().slice(0, 120);
-    if (!topic) return;
-
-    // Only allow when paired
-    const partnerSocket = getSocket(partners.get(socket.id));
-    if (!partnerSocket?.connected) return;
-
-    // Broadcast the result to both sides of the pair
-    socket.emit("topicResult", { topic });
-    partnerSocket.emit("topicResult", { topic });
   });
 
   socket.on("next", () => {
